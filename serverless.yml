@@ -1,0 +1,131 @@
+service: ${file(ServerlessScripts.js):stackName}-stack
+
+plugins:
+  - serverless-plugin-log-retention
+  - serverless-plugin-split-stacks
+  - serverless-domain-manager
+  - serverless-prune-plugin
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: ${file(ServerlessScripts.js):stage}
+  region: ${file(ServerlessScripts.js):region}
+  profile: ${file(ServerlessScripts.js):profile}
+  logRetentionInDays: ${file(ServerlessScripts.js):logRetentionInDays}
+  timeout: 29
+  environment:
+    NODE_PATH: ${file(ServerlessScripts.js):nodePath}
+    ACCOUNT_ID: ${aws:accountId}
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    APP_QUEUE: ${self:service}-${self:provider.stage}-appQueue
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: '*'
+
+custom:
+  modulesLayer: ${self:service}-${self:provider.stage}-modules
+  srcLayer: ${self:service}-${self:provider.stage}-src
+  authorizationStack: serverless-nestjs-cognito-stack-${self:provider.stage}
+  cognitoUserPool: !ImportValue ${self:custom.authorizationStack}-user-pool-export
+  prune:
+    automatic: true
+    includeLayers: true
+  splitStacks:
+    perFunction: true
+    perType: false
+    perGroupFunction: false
+  customDomain:
+    rest:
+      domainName: ${file(ServerlessScripts.js):domainName}
+      basePath: app
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+layers:
+  modules:
+    name: ${self:custom.modulesLayer}
+    path: layers/modules
+    compatibleRuntimes:
+      - nodejs16.x
+  src:
+    name: ${self:custom.srcLayer}
+    path: layers/src
+    compatibleRuntimes:
+      - nodejs16.x
+
+functions:
+  testAuth:
+    handler: dist/handlers/testAuth/main.handler
+    package:
+      patterns:
+        - '!*/**'
+        - 'dist/handlers/testAuth/**'
+    layers:
+      - !Ref ModulesLambdaLayer
+      - !Ref SrcLambdaLayer
+    events:
+      - http:
+          method: get
+          path: /
+          cors:
+            origin: '*'
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.cognitoUserPool}
+            claims:
+              - email
+  app:
+    handler: dist/handlers/app/main.handler
+    package:
+      patterns:
+        - '!*/**'
+        - 'dist/handlers/app/**'
+    layers:
+      - !Ref ModulesLambdaLayer
+      - !Ref SrcLambdaLayer
+    events:
+      - http:
+          method: post
+          path: /
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+  appQueueStream:
+    handler: dist/handlers/appQueue/main.handler
+    package:
+      patterns:
+        - '!*/**'
+        - 'dist/handlers/appQueue/**'
+    layers:
+      - !Ref ModulesLambdaLayer
+      - !Ref SrcLambdaLayer
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - appSQS
+              - Arn
+          batchSize: 1
+
+resources:
+  Resources:
+    appSQS:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-appQueue
