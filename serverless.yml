@@ -66,7 +66,7 @@ functions:
     handler: dist/handlers/testAuth/main.handler
     package:
       patterns:
-        - '!*/**'
+        - '!**'
         - 'dist/handlers/testAuth/**'
     layers:
       - !Ref ModulesLambdaLayer
@@ -87,7 +87,7 @@ functions:
     handler: dist/handlers/app/main.handler
     package:
       patterns:
-        - '!*/**'
+        - '!**'
         - 'dist/handlers/app/**'
     layers:
       - !Ref ModulesLambdaLayer
@@ -110,7 +110,7 @@ functions:
     handler: dist/handlers/appQueue/main.handler
     package:
       patterns:
-        - '!*/**'
+        - '!**'
         - 'dist/handlers/appQueue/**'
     layers:
       - !Ref ModulesLambdaLayer
