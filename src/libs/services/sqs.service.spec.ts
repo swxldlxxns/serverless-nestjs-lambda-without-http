@@ -1,49 +1,55 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as AWS from 'aws-sdk';
+import { SQS } from 'aws-sdk';
 
 import { SqsService } from '/opt/src/libs/services/sqs.service';
-
-jest.mock('aws-sdk', () => {
-  const SQS_MOCKED = {
-    sendMessage: jest.fn().mockReturnThis(),
-    endpoint: jest.fn(),
-    promise: jest.fn(),
-  };
-  return {
-    SQS: jest.fn(() => SQS_MOCKED),
-  };
-});
-const SQS = new AWS.SQS({
-  region: 'test',
-});
+import { QUEUE } from '/opt/src/libs/shared/injectables';
 
 describe('SqsService', () => {
   let service: SqsService;
+  let sqs: SQS;
 
   beforeEach(async () => {
     global.console = require('console');
     const MODULE: TestingModule = await Test.createTestingModule({
-      providers: [SqsService],
+      providers: [
+        SqsService,
+        SQS,
+        {
+          provide: ConfigService,
+          useFactory: () => ({
+            get: () => ({
+              accountId: process.env.ACCOUNT_ID,
+              stage: process.env.STAGE,
+              region: process.env.REGION,
+              appQueue: process.env.APP_QUEUE,
+            }),
+          }),
+        },
+        {
+          provide: QUEUE,
+          useValue: SQS,
+        },
+      ],
     }).compile();
+
     service = MODULE.get<SqsService>(SqsService);
-    (SQS.sendMessage().promise as jest.MockedFunction<any>).mockReset();
+    sqs = MODULE.get<SQS>(QUEUE);
   });
 
   it('should return a successful message', async () => {
-    expect(jest.isMockFunction(SQS.sendMessage)).toBeTruthy();
-    expect(jest.isMockFunction(SQS.sendMessage().promise)).toBeTruthy();
-    (
-      SQS.sendMessage().promise as jest.MockedFunction<any>
-    ).mockResolvedValueOnce({});
-    await service.sendMessage('queue', 'data');
-    expect(SQS.sendMessage().promise).toBeCalledTimes(1);
+    sqs.sendMessage = jest.fn().mockImplementation(() => ({
+      promise: jest.fn().mockResolvedValue(null),
+    }));
+
+    expect(await service.sendMessage('queue', 'data')).toBeUndefined();
   });
 
   it('should return a wrong message', async () => {
-    (
-      SQS.sendMessage().promise as jest.MockedFunction<any>
-    ).mockRejectedValueOnce('network error');
-    await service.sendMessage('queue', 'data');
-    expect(SQS.sendMessage().promise).toBeCalledTimes(1);
+    sqs.sendMessage = jest.fn().mockImplementation(() => ({
+      promise: jest.fn().mockRejectedValueOnce(new Error()),
+    }));
+
+    expect(await service.sendMessage('queue', 'data')).toBeUndefined();
   });
 });

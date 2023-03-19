@@ -1,9 +1,12 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SQSEvent } from 'aws-lambda';
 import { SQSRecord } from 'aws-lambda/trigger/sqs';
+import { SQS } from 'aws-sdk';
 
 import { AppService } from '/opt/src/app.service';
 import { SqsService } from '/opt/src/libs/services/sqs.service';
+import { QUEUE } from '/opt/src/libs/shared/injectables';
 import { errorResponse, formatResponse } from '/opt/src/libs/utils';
 
 const SERVICE_NAME = 'AppService';
@@ -18,8 +21,27 @@ describe('AppService', () => {
   beforeEach(async () => {
     global.console = require('console');
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AppService, SqsService],
+      providers: [
+        AppService,
+        SqsService,
+        {
+          provide: ConfigService,
+          useFactory: () => ({
+            get: () => ({
+              accountId: process.env.ACCOUNT_ID,
+              stage: process.env.STAGE,
+              region: process.env.REGION,
+              appQueue: process.env.APP_QUEUE,
+            }),
+          }),
+        },
+        {
+          provide: QUEUE,
+          useValue: SQS,
+        },
+      ],
     }).compile();
+
     service = module.get<AppService>(AppService);
     sqsService = module.get<SqsService>(SqsService);
   });

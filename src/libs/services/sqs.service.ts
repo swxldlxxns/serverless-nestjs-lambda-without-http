@@ -1,34 +1,48 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SQS } from 'aws-sdk';
 import { SendMessageRequest } from 'aws-sdk/clients/sqs';
 
-import { ENV_VARS } from '/opt/src/libs/shared/enviroments';
+import { EnvironmentInterface } from '/opt/src/libs/interfaces/environment.interface';
+import { QUEUE } from '/opt/src/libs/shared/injectables';
+import { log } from '/opt/src/libs/utils';
 
 const SERVICE_NAME = 'SqsService';
-const { region, accountId } = ENV_VARS;
-const sqs = new SQS({ region, apiVersion: 'latest' });
 
 @Injectable()
 export class SqsService {
+  private readonly _accountId: string;
+  private readonly _region: string;
+
+  constructor(
+    @Inject(QUEUE) private readonly _sqs: SQS,
+    private readonly _configService: ConfigService,
+  ) {
+    const { accountId, region }: EnvironmentInterface =
+      this._configService.get<EnvironmentInterface>('config');
+
+    this._accountId = accountId;
+    this._region = region;
+  }
+
   async sendMessage(queueName: string, MessageBody: string): Promise<void> {
     try {
-      console.log({
+      log('INFO', {
         SERVICE_NAME,
         params: {
           queueName,
-          region,
-          accountId,
           MessageBody,
+          accountId: this._accountId,
+          region: this._region,
         },
       });
-      const response = await sqs
+      await this._sqs
         .sendMessage(
-          this._paramsToSendMessage(queueName, accountId, MessageBody),
+          this._paramsToSendMessage(queueName, this._accountId, MessageBody),
         )
         .promise();
-      console.log({ SERVICE_NAME, response });
     } catch (e) {
-      console.error({ SERVICE_NAME, error: e });
+      log('ERROR', { SERVICE_NAME, error: e });
     }
   }
 
@@ -39,7 +53,7 @@ export class SqsService {
   ): SendMessageRequest {
     return {
       MessageBody,
-      QueueUrl: sqs.endpoint.href + accountId + '/' + queueName,
+      QueueUrl: this._sqs.endpoint.href + accountId + '/' + queueName,
     };
   }
 }
