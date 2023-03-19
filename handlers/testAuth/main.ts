@@ -4,8 +4,13 @@ import { APIGatewayEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
 import { AppModule } from '/opt/src/app.module';
 import { AppService } from '/opt/src/app.service';
-import { TestRequestsDto } from '/opt/src/libs/interfaces/request/test-requests.dto';
-import { errorResponse, errorsDto, validateDto } from '/opt/src/libs/utils';
+import { TestRequestsDto } from '/opt/src/libs/dtos/requests/test-requests.dto';
+import {
+  errorResponse,
+  errorsDto,
+  log,
+  validateDto,
+} from '/opt/src/libs/utils';
 
 const SERVICE_NAME = 'AppModule';
 
@@ -19,7 +24,7 @@ exports.handler = async function (
   event: APIGatewayEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> {
-  console.info({ SERVICE_NAME, event, context });
+  log('INFO', { SERVICE_NAME, event, context });
   const app = await bootstrap();
   const appService = app.get(AppService);
   const param = await validateDto(
@@ -27,11 +32,13 @@ exports.handler = async function (
     event.requestContext.authorizer.claims,
   );
   const errors = await errorsDto(param);
+
   if (errors.length)
     return errorResponse(
       { message: errors },
       SERVICE_NAME,
       HttpStatus.BAD_REQUEST,
     );
+
   return await appService.test(param);
 };

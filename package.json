@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@nestjs/common": "9.3.10",
+    "@nestjs/config": "2.3.1",
     "@nestjs/core": "9.3.10",
     "@nestjs/platform-express": "9.3.10",
     "aws-lambda": "1.0.7",
