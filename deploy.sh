@@ -3,6 +3,9 @@
 ./clear.sh
 echo "------------------------------------------------------------"
 echo "Buildings layers"
+mkdir layers
+mkdir layers/modules
+mkdir layers/src
 cp package.json layers/modules/package.json
 cp package-lock.json layers/modules/package-lock.json
 cd layers/modules || exit

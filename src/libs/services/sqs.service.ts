@@ -1,7 +1,7 @@
+import { SQS } from '@aws-sdk/client-sqs';
+import { SendMessageCommandInput } from '@aws-sdk/client-sqs/dist-types/commands/SendMessageCommand';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SQS } from 'aws-sdk';
-import { SendMessageRequest } from 'aws-sdk/clients/sqs';
 
 import { EnvironmentInterface } from '/opt/src/libs/interfaces/environment.interface';
 import { QUEUE } from '/opt/src/libs/shared/injectables';
@@ -25,35 +25,30 @@ export class SqsService {
     this._region = region;
   }
 
-  async sendMessage(queueName: string, MessageBody: string): Promise<void> {
+  async sendMessage(QueueName: string, MessageBody: string): Promise<void> {
     try {
       log('INFO', {
         SERVICE_NAME,
         params: {
-          queueName,
+          QueueName,
           MessageBody,
-          accountId: this._accountId,
-          region: this._region,
         },
       });
-      await this._sqs
-        .sendMessage(
-          this._paramsToSendMessage(queueName, this._accountId, MessageBody),
-        )
-        .promise();
+      await this._sqs.sendMessage(
+        this._paramsToSendMessage(QueueName, MessageBody),
+      );
     } catch (e) {
       log('ERROR', { SERVICE_NAME, error: e });
     }
   }
 
   private _paramsToSendMessage(
-    queueName: string,
-    accountId: string,
+    QueueName: string,
     MessageBody: string,
-  ): SendMessageRequest {
+  ): SendMessageCommandInput {
     return {
       MessageBody,
-      QueueUrl: this._sqs.endpoint.href + accountId + '/' + queueName,
+      QueueUrl: `https://sqs.${this._region}.amazonaws.com/${this._accountId}/${QueueName}`,
     };
   }
 }

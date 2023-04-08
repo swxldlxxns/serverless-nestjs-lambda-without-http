@@ -1,8 +1,8 @@
+import { SQS } from '@aws-sdk/client-sqs';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SQSEvent } from 'aws-lambda';
 import { SQSRecord } from 'aws-lambda/trigger/sqs';
-import { SQS } from 'aws-sdk';
 
 import { AppService } from '/opt/src/app.service';
 import { SqsService } from '/opt/src/libs/services/sqs.service';

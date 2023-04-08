@@ -8,7 +8,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs18.x
   stage: ${file(ServerlessScripts.js):stage}
   region: ${file(ServerlessScripts.js):region}
   profile: ${file(ServerlessScripts.js):profile}
