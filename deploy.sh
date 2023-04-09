@@ -11,7 +11,7 @@ cp package-lock.json layers/modules/package-lock.json
 cd layers/modules || exit
 npm i --omit=dev --ignore-scripts
 cd ../../
-tsc
+tsc --sourceMap false
 cp -rf dist/src/ layers/src/
 echo "------------------------------------------------------------"
 echo "Deploy stack"

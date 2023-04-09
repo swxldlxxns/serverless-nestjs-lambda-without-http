@@ -38,9 +38,9 @@ describe('SqsService', () => {
   });
 
   it('should return a successful message', async () => {
-    sqs.sendMessage = jest.fn().mockResolvedValue(null);
+    sqs.sendMessage = jest.fn().mockResolvedValue({});
 
-    expect(await service.sendMessage('queue', 'data')).toBeUndefined();
+    expect(await service.sendMessage('queue', 'data')).toEqual({});
   });
 
   it('should return a wrong message', async () => {

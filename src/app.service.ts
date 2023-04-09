@@ -1,3 +1,4 @@
+import { SendMessageCommandOutput } from '@aws-sdk/client-sqs';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APIGatewayProxyResult, SQSEvent } from 'aws-lambda';
@@ -28,13 +29,15 @@ export class AppService {
 
   async app(request: AppRequestsDto): Promise<APIGatewayProxyResult> {
     try {
-      await this._sqsService.sendMessage(
-        this._appQueue,
-        `Mensaje de prueba ${new Date()}`,
-      );
+      const { MessageId: id }: SendMessageCommandOutput =
+        await this._sqsService.sendMessage(
+          this._appQueue,
+          `Mensaje de prueba ${new Date()}`,
+        );
 
       return formatResponse<AppResponseDto>(
         {
+          id,
           message: `${request.date}: ${request.code}`,
         },
         SERVICE_NAME,

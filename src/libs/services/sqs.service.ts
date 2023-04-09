@@ -1,4 +1,4 @@
-import { SQS } from '@aws-sdk/client-sqs';
+import { SendMessageCommandOutput, SQS } from '@aws-sdk/client-sqs';
 import { SendMessageCommandInput } from '@aws-sdk/client-sqs/dist-types/commands/SendMessageCommand';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -25,7 +25,10 @@ export class SqsService {
     this._region = region;
   }
 
-  async sendMessage(QueueName: string, MessageBody: string): Promise<void> {
+  async sendMessage(
+    QueueName: string,
+    MessageBody: string,
+  ): Promise<SendMessageCommandOutput> {
     try {
       log('INFO', {
         SERVICE_NAME,
@@ -34,7 +37,8 @@ export class SqsService {
           MessageBody,
         },
       });
-      await this._sqs.sendMessage(
+
+      return await this._sqs.sendMessage(
         this._paramsToSendMessage(QueueName, MessageBody),
       );
     } catch (e) {

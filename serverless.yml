@@ -54,12 +54,12 @@ layers:
     name: ${self:custom.modulesLayer}
     path: layers/modules
     compatibleRuntimes:
-      - nodejs16.x
+      - nodejs18.x
   src:
     name: ${self:custom.srcLayer}
     path: layers/src
     compatibleRuntimes:
-      - nodejs16.x
+      - nodejs18.x
 
 functions:
   testAuth:
