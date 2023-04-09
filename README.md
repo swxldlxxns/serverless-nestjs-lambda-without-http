@@ -2,7 +2,7 @@
 
 
 # Description
-> This project is with Serverless Framework and NestJs, Serverless is with Lambdas functions and with lambda layers, while NestJs is without HTTP. It includes an SQS queue and Unit Tests.
+> This project is with Serverless Framework and NestJs, Serverless is with Lambdas functions and with lambda layers, while NestJs is without HTTP. It includes an SQS queue and Unit Tests. V3
 
 ## AWS
 

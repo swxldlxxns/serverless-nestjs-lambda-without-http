@@ -1,8 +1,8 @@
+import { SendMessageCommandOutput, SQS } from '@aws-sdk/client-sqs';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SQSEvent } from 'aws-lambda';
 import { SQSRecord } from 'aws-lambda/trigger/sqs';
-import { SQS } from 'aws-sdk';
 
 import { AppService } from '/opt/src/app.service';
 import { SqsService } from '/opt/src/libs/services/sqs.service';
@@ -52,12 +52,17 @@ describe('AppService', () => {
   });
 
   it('should return a message', async () => {
-    jest
-      .spyOn(sqsService, 'sendMessage')
-      .mockImplementation(async (): Promise<void> => null);
+    jest.spyOn(sqsService, 'sendMessage').mockImplementation(
+      async (): Promise<SendMessageCommandOutput> =>
+        Promise.resolve({
+          $metadata: undefined,
+          MessageId: '123',
+        }),
+    );
     expect(await service.app({ code: '123', date: new Date() })).toEqual(
       formatResponse(
         {
+          id: '123',
           message: `${new Date()}: ${123}`,
         },
         SERVICE_NAME,

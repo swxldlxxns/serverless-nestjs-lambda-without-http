@@ -8,6 +8,7 @@
 coverage/
 .esbuild/
 .build/
+layers/
 
 # Node artifact files
 node_modules/

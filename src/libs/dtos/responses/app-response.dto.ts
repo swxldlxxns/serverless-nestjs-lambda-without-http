@@ -5,5 +5,10 @@ export class AppResponseDto {
   @IsString()
   @IsNotEmpty()
   @Expose()
+  readonly id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Expose()
   readonly message: string;
 }

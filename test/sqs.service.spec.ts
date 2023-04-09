@@ -1,6 +1,6 @@
+import { SQS } from '@aws-sdk/client-sqs';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SQS } from 'aws-sdk';
 
 import { SqsService } from '/opt/src/libs/services/sqs.service';
 import { QUEUE } from '/opt/src/libs/shared/injectables';
@@ -38,17 +38,13 @@ describe('SqsService', () => {
   });
 
   it('should return a successful message', async () => {
-    sqs.sendMessage = jest.fn().mockImplementation(() => ({
-      promise: jest.fn().mockResolvedValue(null),
-    }));
+    sqs.sendMessage = jest.fn().mockResolvedValue({});
 
-    expect(await service.sendMessage('queue', 'data')).toBeUndefined();
+    expect(await service.sendMessage('queue', 'data')).toEqual({});
   });
 
   it('should return a wrong message', async () => {
-    sqs.sendMessage = jest.fn().mockImplementation(() => ({
-      promise: jest.fn().mockRejectedValueOnce(new Error()),
-    }));
+    sqs.sendMessage = jest.fn().mockRejectedValueOnce(new Error());
 
     expect(await service.sendMessage('queue', 'data')).toBeUndefined();
   });
